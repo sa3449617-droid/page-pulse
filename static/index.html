@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Pulse — URL Auditor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            color: #1a1d23;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #0a0d14;
+        }
+
+        header p {
+            color: #5b6170;
+            margin-top: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #dde0e6;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .input-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .input-group input::placeholder {
+            color: #9ca3af;
+        }
+
+        .input-group button {
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            white-space: nowrap;
+        }
+
+        .input-group button:hover {
+            background: #2563eb;
+        }
+
+        .input-group button:active {
+            transform: scale(0.97);
+        }
+
+        .input-group button:disabled {
+            background: #93b5f7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Report */
+        .report-section { display: none; }
+        .report-section.visible { display: block; }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .metric {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem 1.125rem;
+        }
+
+        .metric-label {
+            font-size: 0.78rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0a0d14;
+            word-break: break-word;
+        }
+
+        .metric-value.small {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1a1d23;
+        }
+
+        .metric-value.green { color: #059669; }
+        .metric-value.red { color: #dc2626; }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 1rem 1.125rem;
+            color: #991b1b;
+        }
+
+        .error-box h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .error-box p {
+            font-size: 0.88rem;
+            color: #7f1d1d;
+        }
+
+        .hidden { display: none; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .status-badge.ok { background: #d1fae5; color: #065f46; }
+        .status-badge.redirect { background: #fef3c7; color: #92400e; }
+        .status-badge.client-error { background: #fee2e2; color: #991b1b; }
+        .status-badge.server-error { background: #fce7f3; color: #9d174d; }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.82rem;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #6b7280;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #3b82f6;
+        }
+
+        @media (max-width: 540px) {
+            .input-group {
+                flex-direction: column;
+            }
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+            .container {
+                padding: 1.25rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Page Pulse</h1>
+            <p>Enter a URL to audit its HTTP status, meta data, structure, and content.</p>
+        </header>
+
+        <div class="card">
+            <div class="input-group">
+                <input type="url" id="url-input" placeholder="https://example.com" autofocus>
+                <button id="audit-btn" onclick="runAudit()">Audit</button>
+            </div>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="card hidden" style="text-align:center;color:#6b7280;">
+            <div class="spinner" style="border-color:rgba(59,130,246,0.2);border-top-color:#3b82f6;width:28px;height:28px;"></div>
+            <p style="margin-top:0.5rem;">Auditing…</p>
+        </div>
+
+        <!-- Error display -->
+        <div id="error-display" class="card hidden">
+            <div class="error-box">
+                <h3 id="error-title">Error</h3>
+                <p id="error-detail"></p>
+            </div>
+        </div>
+
+        <!-- Report -->
+        <div id="report-section" class="card report-section">
+            <h2 style="font-size:1.125rem;font-weight:600;margin-bottom:1rem;color:#0a0d14;">Audit Report</h2>
+            <div class="report-grid">
+                <div class="metric">
+                    <div class="metric-label">URL</div>
+                    <div class="metric-value small" id="report-url">—</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">HTTP Status</div>
+                    <div class="metric-value" id="report-status">—</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Response Time</div>
+                    <div class="metric-value" id="report-time">—</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Word Count</div>
+                    <div class="metric-value" id="report-words">—</div>
+                </div>
+                <div class="metric full-width">
+                    <div class="metric-label">Page Title</div>
+                    <div class="metric-value small" id="report-title">—</div>
+                </div>
+                <div class="metric full-width">
+                    <div class="metric-label">Meta Description</div>
+                    <div class="metric-value small" id="report-meta">—</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">H1 Headings</div>
+                    <div class="metric-value" id="report-h1">—</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Images Missing Alt</div>
+                    <div class="metric-value" id="report-alt">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Built for <a href="https://digitalheroesco.com" target="_blank">Digital Heroes Training Task</a>
+    </footer>
+
+    <script>
+        const input = document.getElementById('url-input');
+        const btn = document.getElementById('audit-btn');
+        const loading = document.getElementById('loading');
+        const errorDisplay = document.getElementById('error-display');
+        const errorTitle = document.getElementById('error-title');
+        const errorDetail = document.getElementById('error-detail');
+        const reportSection = document.getElementById('report-section');
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') runAudit();
+        });
+
+        async function runAudit() {
+            const url = input.value.trim();
+            if (!url) {
+                showError('Empty URL', 'Please enter a URL to audit.');
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+            hideReport();
+
+            try {
+                const response = await fetch('/audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(data.error || 'Request failed', data.detail || 'An unexpected error occurred.');
+                    return;
+                }
+
+                renderReport(data);
+
+            } catch (err) {
+                showError('Network Error', 'Could not reach the server. Is the backend running?');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderReport(data) {
+            document.getElementById('report-url').textContent = data.url;
+
+            const statusEl = document.getElementById('report-status');
+            statusEl.textContent = data.status_code;
+            statusEl.className = 'metric-value';
+            if (data.status_code < 300) {
+                statusEl.innerHTML += ' <span class="status-badge ok">OK</span>';
+            } else if (data.status_code < 400) {
+                statusEl.innerHTML += ' <span class="status-badge redirect">Redirect</span>';
+            } else if (data.status_code < 500) {
+                statusEl.innerHTML += ' <span class="status-badge client-error">Client Error</span>';
+            } else {
+                statusEl.innerHTML += ' <span class="status-badge server-error">Server Error</span>';
+            }
+
+            document.getElementById('report-time').textContent = data.response_time_ms + ' ms';
+            document.getElementById('report-words').textContent = data.word_count.toLocaleString();
+
+            document.getElementById('report-title').textContent = data.page_title || '(none)';
+            document.getElementById('report-meta').textContent = data.meta_description || '(none)';
+            document.getElementById('report-h1').textContent = data.h1_count;
+            document.getElementById('report-alt').textContent = data.images_missing_alt;
+
+            reportSection.classList.add('visible');
+        }
+
+        function setLoading(isLoading) {
+            loading.classList.toggle('hidden', !isLoading);
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading ? '<span class="spinner"></span> Auditing…' : 'Audit';
+        }
+
+        function showError(title, detail) {
+            errorTitle.textContent = title;
+            errorDetail.textContent = detail;
+            errorDisplay.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorDisplay.classList.add('hidden');
+        }
+
+        function hideReport() {
+            reportSection.classList.remove('visible');
+        }
+    </script>
+</body>
+</html>
