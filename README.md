@@ -2,27 +2,7 @@
 
 A lightweight web tool that audits any URL and returns a structured report: HTTP status, response time, page title, meta description, heading count, image accessibility, and word count.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sa3449617-droid/page-pulse)
 
-Built for the **Digital Heroes Internship Programme** — Software Development (SDE) qualification task.
-
----
-
-## One-Click Deploy
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/sa3449617-droid/page-pulse)
-
-1. Click the button above
-2. Connect your GitHub account (if not already connected)
-3. Render auto-detects `render.yaml` — just confirm and deploy
-4. Your live URL will be: `https://page-pulse.onrender.com`
-
-**Alternative — manual deploy:**
-- **Render:** New Web Service → connect GitHub repo → start command `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- **Railway:** Deploy from GitHub — auto-detects Python/FastAPI
-- **Docker:** Build the included `Dockerfile` and deploy anywhere
-
----
 
 ## Setup
 
